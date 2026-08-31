@@ -1,13 +1,13 @@
 Date created: August 31, 2026
-Date last modified: August 31, 2026 (TDD / Vitest plan added)
+Date last modified: August 31, 2026 (full implementation record — all phases verified)
 
 # Register, Login, and Logout - Technical PRD
 
 ## Overview/Problem
 
-Teachers need a shared quiz maker where multiple collaborators can build a test bank of multiple-choice questions. Before any question content can be created, the application must know who is using it. Today the starter project has no user accounts, no persistence, and no way to distinguish one teacher from another.
+Teachers need a shared quiz maker where multiple collaborators can build a test bank of multiple-choice questions. Before any question content can be created, the application must know who is using it.
 
-This feature establishes identity: teachers can register, sign in, and sign out. Successful authentication routes them to a stub MCQs page, which will become the home for question-bank work in a later phase.
+**Implemented (August 2026):** Teacher registration, login, logout, session cookies, D1-backed user storage, HTTP auth API routes, and shadcn/ui auth pages. Successful authentication lands on a protected `/mcqs` stub. All four implementation phases are complete; automated tests (44) and manual browser verification pass.
 
 ---
 
@@ -202,14 +202,14 @@ Return type for reads should omit `password_hash` in the public user shape expos
 - Sign with `SESSION_SECRET` from environment (`.dev.vars` locally, `wrangler secret put` in production)
 - Cookie flags: `HttpOnly`, `SameSite=Lax`, `Secure` in production, `Path=/`
 - Helper module: `src/lib/auth/session.ts` — create, read, destroy session
-- Middleware or layout guard on `/mcqs` reads session and redirects unauthenticated users to `/login`
+- Route guard on `/mcqs` via server page + `getMcqsRedirectPath` (no `middleware.ts`)
 
 ### User Interface Requirements
 
 #### Landing / Home (`/`)
 
-- Links or buttons to **Register** and **Login**
-- If already authenticated, redirect to `/mcqs`
+- If authenticated, redirect to `/mcqs`
+- If not authenticated, redirect to `/login` (sign up available from the login page)
 
 #### Register Page (`/register`)
 
@@ -241,9 +241,17 @@ Return type for reads should omit `password_hash` in the public user shape expos
 
 #### Shared UI
 
-- Use existing shadcn/ui components (`Button`, `Input`, `Label`, `Card`, `Field`)
-- Match project styling (Tailwind v4, `base-nova`)
-- Accessible form labels and error text
+- Built from **shadcn/ui blocks** (Base UI, `base-nova` style) with **Tailwind CSS v4** theme tokens
+- Auth page shell: centered layout (`min-h-svh`, `max-w-sm`, responsive padding) wrapping each form
+- Components: `src/components/login-form.tsx` (`LoginForm`) and `src/components/signup-form.tsx` (`SignupForm`)
+- shadcn primitives: `Card`, `Field`, `FieldLabel`, `FieldDescription`, `FieldError`, `Input`, `Button`
+- Cross-links use Next.js `Link` (`/login` ↔ `/register`)
+- **Omitted from shadcn block template** (out of scope): “Login with Google”, “Sign up with Google”, “Forgot your password?”
+- **Adapted from block template** (PRD requirements):
+  - Signup uses first name + last name + username (block template had single “Full Name” only)
+  - Login accepts email **or** username (block template had email-only label; description updated accordingly)
+- MCQs page uses `Card` + `LogoutButton` (`src/components/auth/logout-button.tsx`)
+- Accessible form labels, `FieldError` for validation and server errors
 
 ---
 
@@ -452,7 +460,7 @@ vi.mock("@opennextjs/cloudflare", () => ({
 
 ---
 
-### Phase 4: UI Pages and Route Protection - PLANNED
+### Phase 4: UI Pages and Route Protection - COMPLETED
 
 **Objective**: Teachers interact through the browser; client components and route-guard logic are test-covered.
 
@@ -485,22 +493,93 @@ Use `@testing-library/react` and `userEvent` for client components. Extract form
 
 **Deliverables**:
 
-- `src/components/auth/register-form.tsx` + `.test.tsx`
-- `src/components/auth/login-form.tsx` + `.test.tsx`
+- `src/components/login-form.tsx` + `src/components/auth/login-form.test.tsx`
+- `src/components/signup-form.tsx` + `src/components/auth/register-form.test.tsx`
 - `src/components/auth/logout-button.tsx` + `.test.tsx`
 - `src/app/register/page.tsx`
 - `src/app/login/page.tsx`
 - `src/app/mcqs/page.tsx` + guard test
-- `src/middleware.ts` (if used) or layout guard module
+- `src/lib/auth/mcqs-guard.ts`
 - Updated `src/app/page.tsx`
 
 **Phase 4 acceptance (tests + criteria)**:
 
-- [ ] `npm test` passes (full suite green)
-- [ ] `npm run lint` passes
-- [ ] `npm run build` passes
-- [ ] Form components render, validate, and handle API success/error paths
-- [ ] Route guard tests prove unauthenticated users cannot reach `/mcqs` logic
+- [x] `npm test` passes (full suite green — 44 tests)
+- [x] `npm run lint` passes
+- [x] `npm run build` passes
+- [x] Form components render, validate, and handle API success/error paths
+- [x] Route guard tests prove unauthenticated users cannot reach `/mcqs` logic
+- [x] **Manual verification:** register, login, logout, and navigation confirmed in local browser
+
+---
+
+## Implementation Record
+
+Complete map of what was built, how it connects, and where to find it in code.
+
+### Git and branch
+
+| Item | Value |
+|------|-------|
+| Feature branch | `feature/auth-register-login-logout` |
+| Phase 1 commit | `c04dba8` — Vitest, schema contract, D1 binding |
+| Phase 2 commit | `086fd2b` — User service, session, validation |
+| Phase 3 commit | `3a3b098` — Auth API routes |
+| Phase 4 | Implemented locally (shadcn UI pages); commit pending user direction |
+
+### Route map
+
+| Route | Type | Implementation | Behavior |
+|-------|------|----------------|----------|
+| `/` | Server | `src/app/page.tsx` | Session → `/mcqs`; else → `/login` |
+| `/login` | Static shell + client form | `src/app/login/page.tsx`, `src/components/login-form.tsx` | shadcn login block; POST `/api/auth/login` |
+| `/register` | Static shell + client form | `src/app/register/page.tsx`, `src/components/signup-form.tsx` | shadcn signup block; POST `/api/auth/register` |
+| `/mcqs` | Server (protected) | `src/app/mcqs/page.tsx` | Guard + user display + logout |
+| `POST /api/auth/register` | API | `src/app/api/auth/register/route.ts` | 201 + session cookie |
+| `POST /api/auth/login` | API | `src/app/api/auth/login/route.ts` | 200 + session cookie |
+| `POST /api/auth/logout` | API | `src/app/api/auth/logout/route.ts` | 200 + cookie cleared |
+
+### Request flow
+
+```
+Register/Login form (client)
+  → fetch POST /api/auth/*
+    → Zod validation (auth.ts)
+    → UserService (D1) + bcrypt
+    → createSession (HMAC cookie)
+  → router.push("/mcqs")
+
+/mcqs (server)
+  → cookies() → getSession()
+  → getMcqsRedirectPath() → redirect("/login") if null
+  → getUserById() → render stub + LogoutButton
+
+Logout (client)
+  → fetch POST /api/auth/logout
+  → router.push("/login")
+```
+
+### Test suite summary
+
+| Phase | Test files | Tests |
+|-------|------------|-------|
+| 1 | `users-schema.test.ts` | 4 |
+| 2 | `auth.test.ts`, `user-service.test.ts`, `session.test.ts` | 20 |
+| 3 | `register/login/logout route.test.ts` | 10 |
+| 4 | `login-form`, `register-form`, `logout-button`, `mcqs-guard` tests | 10 |
+| **Total** | 11 files | **44** |
+
+Run: `npm test`
+
+### Manual verification (confirmed)
+
+- Navigate to `/` → redirects to `/login`
+- Register new teacher → lands on `/mcqs`
+- Log out → returns to `/login`
+- Log in (email or username) → lands on `/mcqs`
+- `/mcqs` without session → redirects to `/login`
+
+**Local runtime:** Use `npm run preview` for full D1 + session behavior. Set `SESSION_SECRET` in `.dev.vars`. Apply migration locally: `npx wrangler d1 migrations apply aisprints-quizmaker-db --local`.
 
 ---
 
@@ -508,86 +587,233 @@ Use `@testing-library/react` and `userEvent` for client components. Extract form
 
 ### Key Files
 
-**Production**
+**Infrastructure & schema**
 
-- `wrangler.jsonc` — D1 `DB` binding configuration
-- `vitest.config.ts` — Vitest runner config (`@/` alias, jsdom)
-- `migrations/0001_create_users_table.sql` — Users schema (exact filename from Wrangler)
-- `src/lib/db/users-schema.ts` — Schema contract (table name, columns, migration SQL)
-- `src/lib/services/user-service.ts` — User CRUD and password verification
-- `src/lib/auth/session.ts` — Cookie-based session helpers
-- `src/lib/validations/auth.ts` — Zod schemas for auth payloads
-- `src/app/api/auth/register/route.ts` — Registration endpoint
-- `src/app/api/auth/login/route.ts` — Login endpoint
-- `src/app/api/auth/logout/route.ts` — Logout endpoint
-- `src/components/auth/register-form.tsx` — Client register form
-- `src/components/auth/login-form.tsx` — Client login form
-- `src/components/auth/logout-button.tsx` — Client logout control
-- `src/app/register/page.tsx` — Registration UI
-- `src/app/login/page.tsx` — Login UI
-- `src/app/mcqs/page.tsx` — Authenticated stub destination
-- `src/middleware.ts` — Optional route protection for `/mcqs`
+| File | Purpose |
+|------|---------|
+| `wrangler.jsonc` | D1 `DB` binding (`aisprints-quizmaker-db`) |
+| `migrations/0001_create_users_table.sql` | Users table migration |
+| `src/lib/db/users-schema.ts` | Schema contract exported for tests |
+| `vitest.config.ts` | Vitest + jsdom + `@/` paths + `server-only` stub |
+| `src/test/setup.ts` | `@testing-library/jest-dom` setup |
+| `src/test/server-only-stub.ts` | Vitest alias for `server-only` imports |
+| `.dev.vars.example` | `SESSION_SECRET` placeholder |
 
-**Tests (written before implementation in each phase)**
+**Server logic**
 
-- `src/lib/db/users-schema.test.ts` — Phase 1
-- `src/lib/validations/auth.test.ts` — Phase 2
-- `src/lib/services/user-service.test.ts` — Phase 2
-- `src/lib/auth/session.test.ts` — Phase 2
-- `src/app/api/auth/register/route.test.ts` — Phase 3
-- `src/app/api/auth/login/route.test.ts` — Phase 3
-- `src/app/api/auth/logout/route.test.ts` — Phase 3
-- `src/components/auth/register-form.test.tsx` — Phase 4
-- `src/components/auth/login-form.test.tsx` — Phase 4
-- `src/components/auth/logout-button.test.tsx` — Phase 4
-- `src/app/mcqs/mcqs-guard.test.ts` — Phase 4
+| File | Purpose |
+|------|---------|
+| `src/lib/services/user-service.ts` | D1 CRUD, bcrypt hash/verify |
+| `src/lib/auth/session.ts` | HMAC-signed session cookies |
+| `src/lib/auth/mcqs-guard.ts` | Redirect path helper for `/mcqs` |
+| `src/lib/validations/auth.ts` | Zod `registerSchema`, `loginSchema` |
 
-### Implementation Patterns
+**API routes**
 
-**Accessing D1 from the user service:**
+| File | Purpose |
+|------|---------|
+| `src/app/api/auth/register/route.ts` | `POST` register |
+| `src/app/api/auth/login/route.ts` | `POST` login |
+| `src/app/api/auth/logout/route.ts` | `POST` logout |
 
-```typescript
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+**UI (shadcn blocks + Tailwind v4)**
 
-export async function getDb() {
+| File | Purpose |
+|------|---------|
+| `src/components/login-form.tsx` | shadcn login block + client auth |
+| `src/components/signup-form.tsx` | shadcn signup block + client auth |
+| `src/components/auth/logout-button.tsx` | Client logout button |
+| `src/app/login/page.tsx` | Centered page shell (`min-h-svh`, `max-w-sm`) |
+| `src/app/register/page.tsx` | Centered page shell |
+| `src/app/mcqs/page.tsx` | Protected MCQ stub |
+| `src/app/page.tsx` | Root redirect logic |
+
+**Tests** — colocated; 11 files, 44 tests (see Implementation Record)
+
+### Code references by layer
+
+#### D1 binding
+
+Configured in `wrangler.jsonc`: binding `DB`, database `aisprints-quizmaker-db`, migrations in `migrations/`.
+
+#### Schema contract
+
+Table name, columns, and migration SQL are defined once and tested:
+
+```1:31:src/lib/db/users-schema.ts
+export const USERS_TABLE_NAME = "users";
+
+export const USERS_COLUMNS = [
+  "id",
+  "first_name",
+  // ...
+] as const;
+
+export const USERS_MIGRATION_SQL = `-- Migration: create users table...
+```
+
+Migration file: `migrations/0001_create_users_table.sql`
+
+#### User service (D1 + bcrypt)
+
+D1 access via `getCloudflareContext()`:
+
+```52:55:src/lib/services/user-service.ts
+async function getDb() {
   const { env } = await getCloudflareContext();
   return env.DB;
 }
 ```
 
-**Prepared statement with numbered placeholders (D1 convention):**
+Password hashing (10 rounds) and user creation:
 
-```typescript
-const row = await db
-  .prepare("SELECT id, email, password_hash FROM users WHERE email = ?1")
-  .bind(email)
-  .all();
-const user = row.results[0];
+```79:107:src/lib/services/user-service.ts
+export async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, SALT_ROUNDS);
+}
+// ...
+export async function createUser(input: CreateUserInput): Promise<PublicUser> {
+  const db = await getDb();
+  const id = crypto.randomUUID();
+  const passwordHash = await hashPassword(input.password);
+  await db.prepare(
+    "INSERT INTO users (id, first_name, last_name, username, email, password_hash) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+  ).bind(id, input.firstName, input.lastName, input.username, input.email, passwordHash).run();
 ```
 
-**Password flow (server-side only):**
+Login lookup includes `passwordHash` via `getAuthUserByEmailOrUsername` (`src/lib/services/user-service.ts:159-177`).
 
-```typescript
-// Register: hash before insert
-const passwordHash = await hashPassword(plainPassword);
-await db.prepare(
-  "INSERT INTO users (first_name, last_name, username, email, password_hash) VALUES (?1, ?2, ?3, ?4, ?5)"
-).bind(firstName, lastName, username, email, passwordHash).run();
+#### Session cookies
 
-// Login: compare submitted password to stored hash
-const valid = await verifyPassword(submittedPassword, user.password_hash);
+HMAC-SHA256 signed payload; 7-day expiry:
+
+```66:74:src/lib/auth/session.ts
+export function createSession(userId: string): string {
+  const payload: SessionPayload = {
+    userId,
+    exp: Math.floor(Date.now() / 1000) + SESSION_MAX_AGE_SECONDS,
+  };
+  const token = encodeSession(payload);
+  return `${SESSION_COOKIE_NAME}=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${SESSION_MAX_AGE_SECONDS}`;
+}
 ```
 
-### Important Notes
+Requires `SESSION_SECRET` in environment (`src/lib/auth/session.ts:11-17`).
+
+#### Validation (Zod)
+
+```3:18:src/lib/validations/auth.ts
+export const registerSchema = z.object({
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  username: z.string().min(3).max(32).regex(/^[a-zA-Z0-9_]+$/),
+  email: z.email(),
+  password: z.string().min(8),
+});
+
+export const loginSchema = z.object({
+  identifier: z.string().min(1),
+  password: z.string().min(1),
+});
+```
+
+#### API: register
+
+```11:49:src/app/api/auth/register/route.ts
+export async function POST(request: Request) {
+  // validate → check duplicates → createUser → createSession → 201
+}
+```
+
+#### API: login
+
+Generic failure message (no account enumeration):
+
+```10:31:src/app/api/auth/login/route.ts
+const INVALID_CREDENTIALS_MESSAGE = "Invalid email/username or password";
+// ...
+if (!authUser || !(await verifyPassword(password, authUser.passwordHash))) {
+  return NextResponse.json({ error: INVALID_CREDENTIALS_MESSAGE }, { status: 401 });
+}
+```
+
+#### API: logout
+
+```5:14:src/app/api/auth/logout/route.ts
+export async function POST() {
+  return NextResponse.json(
+    { redirectTo: "/login" },
+    { status: 200, headers: { "Set-Cookie": destroySession() } },
+  );
+}
+```
+
+#### Route protection
+
+Pure guard function (unit tested):
+
+```1:9:src/lib/auth/mcqs-guard.ts
+export function getMcqsRedirectPath(session: { userId: string } | null): string | null {
+  if (!session) return "/login";
+  return null;
+}
+```
+
+Applied in MCQs server page:
+
+```16:23:src/app/mcqs/page.tsx
+export default async function McqsPage() {
+  const cookieStore = await cookies();
+  const session = getSession(cookieStore.get(SESSION_COOKIE_NAME)?.value);
+  const redirectPath = getMcqsRedirectPath(session);
+  if (redirectPath) redirect(redirectPath);
+```
+
+#### Root redirect
+
+```6:14:src/app/page.tsx
+export default async function Home() {
+  const cookieStore = await cookies();
+  const session = getSession(cookieStore.get(SESSION_COOKIE_NAME)?.value);
+  if (session) redirect("/mcqs");
+  redirect("/login");
+}
+```
+
+#### Client forms (shadcn)
+
+Login submits to API and navigates on success (`src/components/login-form.tsx:37-72`). Signup validates with `registerSchema` + confirm-password match, then POSTs to register API (`src/components/signup-form.tsx:56-115`). Logout button POSTs `/api/auth/logout` (`src/components/auth/logout-button.tsx:14-26`).
+
+Page shells match shadcn block layout:
+
+```3:10:src/app/login/page.tsx
+export default function LoginPage() {
+  return (
+    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
+      <div className="w-full max-w-sm">
+        <LoginForm />
+      </div>
+    </div>
+  );
+}
+```
+
+### Installed dependencies (auth feature)
+
+**Runtime:** `bcryptjs`, `zod`, `server-only`
+
+**Dev / test:** `vitest`, `@vitejs/plugin-react`, `@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom`, `@testing-library/dom`, `jsdom`, `vite-tsconfig-paths`, `@types/bcryptjs`
+
+See `package.json` for versions.
+
+### Important notes
 
 - Never log or return `password_hash` in API responses
 - Use generic error copy on login failure to avoid account enumeration
 - D1 is server-only — never import `user-service.ts` from `'use client'` components
-- Apply migrations locally only; remote apply is the user's explicit decision
-- `npm run dev` uses Node and may not exercise D1 bindings — verify auth with `npm run preview`
-- New dependencies require user approval before install (`bcryptjs`, `zod`, Vitest dev dependencies)
-- **TDD is mandatory**: write tests first in each phase; do not mark a phase complete until `npm test` is green
-- Follow `.cursor/skills/testing/SKILL.md` for Vitest config, mocking, and component testing patterns
+- `npm run dev` (port 3000) serves UI but D1 bindings require `npm run preview` for full auth persistence
+- Remote D1 migrations and production deploy are operator-managed (not automated by agents)
+- Forms use Zod + `FieldError` for validation (not HTML `required`, so errors render consistently in tests and UI)
 
 ---
 
@@ -595,23 +821,25 @@ const valid = await verifyPassword(submittedPassword, user.password_hash);
 
 Feature ships when **all** items below are checked **and** `npm test` exits 0.
 
-- [ ] Vitest configured; `npm test` and `npm run test:watch` scripts work
-- [ ] D1 database is configured with `DB` binding and `users` migration applied locally
-- [ ] Schema contract tests pass (`users-schema.test.ts`)
-- [ ] User service, session, and validation tests pass
-- [ ] API route handler tests pass (register, login, logout)
-- [ ] UI component and route-guard tests pass
-- [ ] A teacher can register with first name, last name, username, email, and password
-- [ ] Duplicate username or email returns a clear validation error without creating a row
-- [ ] Passwords are stored as hashes only; plain-text passwords are never persisted
-- [ ] A registered teacher can log in with email or username plus password
-- [ ] Invalid login credentials return 401 with a generic message
-- [ ] Successful register and login set a session cookie and redirect to `/mcqs`
-- [ ] `/mcqs` is inaccessible without a valid session (redirect to `/login`)
-- [ ] Logout clears the session and redirects to `/login`
-- [ ] MCQs stub page shows placeholder content and a working logout control
-- [ ] `npm run lint` passes
-- [ ] `npm run build` passes
+- [x] Vitest configured; `npm test` and `npm run test:watch` scripts work
+- [x] D1 database is configured with `DB` binding and `users` migration applied locally
+- [x] Schema contract tests pass (`users-schema.test.ts`)
+- [x] User service, session, and validation tests pass
+- [x] API route handler tests pass (register, login, logout)
+- [x] UI component and route-guard tests pass
+- [x] A teacher can register with first name, last name, username, email, and password
+- [x] Duplicate username or email returns a clear validation error without creating a row
+- [x] Passwords are stored as hashes only; plain-text passwords are never persisted
+- [x] A registered teacher can log in with email or username plus password
+- [x] Invalid login credentials return 401 with a generic message
+- [x] Successful register and login set a session cookie and redirect to `/mcqs`
+- [x] `/mcqs` is inaccessible without a valid session (redirect to `/login`)
+- [x] Logout clears the session and redirects to `/login`
+- [x] MCQs stub page shows placeholder content and a working logout control
+- [x] `/` redirects unauthenticated users to `/login` and authenticated users to `/mcqs`
+- [x] **Manually verified** in local browser: register, login, logout, navigation
+- [x] `npm run lint` passes
+- [x] `npm run build` passes
 
 ---
 
@@ -619,24 +847,25 @@ Feature ships when **all** items below are checked **and** `npm test` exits 0.
 
 | Metric | Target | How Measured |
 |--------|--------|--------------|
-| Unit test suite | 100% pass before each phase gate | `npm test` exit code |
-| Registration completion | User reaches `/mcqs` after submit | Component test + manual smoke |
-| Login success rate | Valid credentials always reach `/mcqs` | Route test + manual smoke |
+| Unit test suite | 100% pass | `npm test` — 44/44 |
+| End-to-end auth flow | Register → MCQs → logout → login | Manual browser verification (passed) |
+| Registration completion | User reaches `/mcqs` after submit | Component test + manual |
+| Login success rate | Valid credentials reach `/mcqs` | Route test + manual |
 | Session persistence | Refresh on `/mcqs` keeps user signed in | Session unit tests + browser reload |
-| Logout effectiveness | After logout, `/mcqs` redirects to `/login` | Route + guard tests |
-| Zero plain-text passwords in DB | 100% of rows have non-empty `password_hash` | `user-service.test.ts` + inspect local D1 |
+| Logout effectiveness | After logout, `/mcqs` redirects to `/login` | Route + guard tests + manual |
+| Zero plain-text passwords in DB | 100% hashed | `user-service.test.ts` |
 
 ---
 
 ## Dependencies
 
-### External Dependencies
+### External Dependencies (installed)
 
-- **Cloudflare D1** — SQLite database for user records
-- **bcryptjs** (proposed) — Password hashing and comparison compatible with Workers via `nodejs_compat`
-- **zod** (proposed) — Request body validation for API routes
-- **vitest** — Unit test runner (TDD across all phases)
-- **@vitejs/plugin-react**, **@testing-library/react**, **@testing-library/user-event**, **jsdom**, **vite-tsconfig-paths** — Vitest and React component testing
+- **Cloudflare D1** — SQLite database (`aisprints-quizmaker-db`)
+- **bcryptjs** — Password hashing (`SALT_ROUNDS = 10`)
+- **zod** — Request and form validation
+- **server-only** — Marks server modules for Next.js
+- **vitest** + **@testing-library/\*** + **jsdom** — TDD test suite
 
 ### Internal Dependencies
 
@@ -650,7 +879,9 @@ Feature ships when **all** items below are checked **and** `npm test` exits 0.
 |----------|---------|-------|------------|
 | `SESSION_SECRET` | Signs session cookies | `.dev.vars` | `wrangler secret put SESSION_SECRET` |
 
-Add empty placeholder to `.dev.vars.example` when implemented.
+Add empty placeholder to `.dev.vars.example` (implemented).
+
+Also requires `NEXTJS_ENV=development` in `.dev.vars.example` for local Wrangler preview.
 
 ---
 
@@ -679,37 +910,51 @@ Add empty placeholder to `.dev.vars.example` when implemented.
 
 ## Troubleshooting Guide
 
-### Common Issue Name
+### Auth routes return 500 or "DB is undefined"
 
-**Problem**: Auth routes return 500 or "DB is undefined" during local dev
+**Problem:** Auth API fails during local dev on port 3000
 
-**Cause**: D1 binding is not available in Node dev server, or migration not applied locally
+**Cause:** D1 binding unavailable in Node dev server, or migration not applied, or missing `SESSION_SECRET`
 
-**Solution**: Run `npx wrangler d1 migrations apply aisprints-quizmaker-db --local`, then test with `npm run preview` instead of `npm run dev`
+**Solution:** Set `SESSION_SECRET` in `.dev.vars`; run `npx wrangler d1 migrations apply aisprints-quizmaker-db --local`; use `npm run preview` instead of `npm run dev`
 
-### D1 Binding Errors
+### Root URL shows old Next.js starter page
 
-**Problem**: `Wrong number of bindings` or placeholder errors in queries
+**Problem:** `http://localhost:3000` shows default starter content
 
-**Cause**: Mixed anonymous `?` and numbered `?1` placeholders in the same statement
+**Cause:** Stale dev server or uncommitted Phase 4 changes
 
-**Solution**: Use numbered placeholders consistently (`?1`, `?2`, …) per project D1 rules
+**Solution:** Restart `npm run dev` after pulling latest; expected behavior is redirect to `/login` (`src/app/page.tsx`)
 
-### Tests fail importing `@/` modules
+### D1 binding / placeholder errors
 
-**Problem**: Vitest cannot resolve `@/lib/...` imports
+**Problem:** `Wrong number of bindings` in queries
 
-**Cause**: Missing `vite-tsconfig-paths` plugin in `vitest.config.ts`
+**Cause:** Mixed `?` and `?1` placeholders
 
-**Solution**: Add plugin per `.cursor/skills/testing/SKILL.md`; confirm `tsconfig.json` paths match
+**Solution:** Use numbered placeholders only (`?1`, `?2`, …)
 
-### Phase marked complete but tests still red
+### Vitest `@/` import failures
 
-**Problem**: Implementation exists but `npm test` fails
+**Problem:** Tests cannot resolve `@/lib/...`
 
-**Cause**: Phase completion gate skipped — code written before tests or tests not updated
+**Solution:** Ensure `vite-tsconfig-paths` in `vitest.config.ts`
 
-**Solution**: Re-run TDD cycle: ensure tests were written first, then implement until green; do not advance phases with failing tests
+### Vitest `server-only` import failures
+
+**Problem:** Tests fail resolving `server-only`
+
+**Solution:** Alias in `vitest.config.ts` → `src/test/server-only-stub.ts`
+
+### curl / API smoke test
+
+```powershell
+curl.exe -i -X POST http://localhost:8787/api/auth/register `
+  -H "Content-Type: application/json" `
+  -d "{\"firstName\":\"Jane\",\"lastName\":\"Doe\",\"username\":\"jdoe\",\"email\":\"jane@school.edu\",\"password\":\"securePassword123\"}"
+```
+
+Use preview URL/port from terminal output; not available on plain `npm run dev`.
 
 ---
 
@@ -735,7 +980,9 @@ When working with this PRD:
 
 ## Current Status
 
-**Last Updated**: August 31, 2026
-**Current Phase**: Phase 3 complete — awaiting review before Phase 4
-**Status**: COMPLETED (Phase 3)
-**Next Steps**: User review; on direction, commit Phase 3 to feature branch; then begin Phase 4 (UI Pages and Route Protection)
+**Last Updated:** August 31, 2026  
+**Status:** COMPLETED — all four phases implemented and verified  
+**Feature branch:** `feature/auth-register-login-logout` (Phases 1–3 pushed; Phase 4 pending commit)  
+**Automated tests:** 44/44 passing (`npm test`)  
+**Manual verification:** Passed — register, login, logout, `/` redirect, protected `/mcqs`  
+**Next feature (out of scope):** MCQ test bank creation and collaboration
