@@ -348,7 +348,7 @@ Manual smoke tests (`npm run preview`, browser) supplement but do not replace au
 
 ---
 
-### Phase 2: User Service and Auth Utilities - PLANNED
+### Phase 2: User Service and Auth Utilities - COMPLETED
 
 **Objective**: Server-side user CRUD, password hashing, session helpers, and Zod validation — all covered by unit tests.
 
@@ -399,10 +399,10 @@ vi.mock("@opennextjs/cloudflare", () => ({
 
 **Phase 2 acceptance (tests + criteria)**:
 
-- [ ] `npm test` passes (Phase 1 + 2 tests green)
-- [ ] Passwords hashed before persist; `verifyPassword` compares correctly
-- [ ] Session create/read/destroy covered by tests
-- [ ] Validation schemas reject invalid register/login payloads
+- [x] `npm test` passes (Phase 1 + 2 tests green)
+- [x] Passwords hashed before persist; `verifyPassword` compares correctly
+- [x] Session create/read/destroy covered by tests
+- [x] Validation schemas reject invalid register/login payloads
 
 ---
 
@@ -736,6 +736,6 @@ When working with this PRD:
 ## Current Status
 
 **Last Updated**: August 31, 2026
-**Current Phase**: Phase 1 complete — awaiting review before Phase 2
-**Status**: COMPLETED (Phase 1)
-**Next Steps**: User review; on direction, commit Phase 1 to feature branch; then begin Phase 2 (User Service and Auth Utilities)
+**Current Phase**: Phase 2 complete — awaiting review before Phase 3
+**Status**: COMPLETED (Phase 2)
+**Next Steps**: User review; on direction, commit Phase 2 to feature branch; then begin Phase 3 (API Route Handlers)
