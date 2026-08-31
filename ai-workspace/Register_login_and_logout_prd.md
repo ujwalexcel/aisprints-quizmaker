@@ -406,7 +406,7 @@ vi.mock("@opennextjs/cloudflare", () => ({
 
 ---
 
-### Phase 3: API Route Handlers - PLANNED
+### Phase 3: API Route Handlers - COMPLETED
 
 **Objective**: Register, login, and logout HTTP endpoints behave correctly; route handler tests pass with mocked services.
 
@@ -445,10 +445,10 @@ vi.mock("@opennextjs/cloudflare", () => ({
 
 **Phase 3 acceptance (tests + criteria)**:
 
-- [ ] `npm test` passes (Phase 1–3 tests green)
-- [ ] Register/login/logout routes return correct status codes and bodies
-- [ ] Responses never include `password_hash`
-- [ ] Login failure message is generic (no account enumeration)
+- [x] `npm test` passes (Phase 1–3 tests green)
+- [x] Register/login/logout routes return correct status codes and bodies
+- [x] Responses never include `password_hash`
+- [x] Login failure message is generic (no account enumeration)
 
 ---
 
@@ -736,6 +736,6 @@ When working with this PRD:
 ## Current Status
 
 **Last Updated**: August 31, 2026
-**Current Phase**: Phase 2 complete — awaiting review before Phase 3
-**Status**: COMPLETED (Phase 2)
-**Next Steps**: User review; on direction, commit Phase 2 to feature branch; then begin Phase 3 (API Route Handlers)
+**Current Phase**: Phase 3 complete — awaiting review before Phase 4
+**Status**: COMPLETED (Phase 3)
+**Next Steps**: User review; on direction, commit Phase 3 to feature branch; then begin Phase 4 (UI Pages and Route Protection)
