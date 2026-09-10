@@ -510,7 +510,7 @@ A phase is **done** only when:
 
 ---
 
-### Phase 4: UI — List, Form, Preview, Delete - PLANNED
+### Phase 4: UI — List, Form, Preview, Delete - COMPLETED
 
 **Objective**: Teachers manage MCQs in the browser via shadcn components.
 
@@ -551,12 +551,12 @@ A phase is **done** only when:
 
 **Phase 4 acceptance**:
 
-- [ ] List shows all MCQs with actions menu
-- [ ] Create and edit share one form; 2–6 choices; one correct
-- [ ] Preview opens in dialog; optional attempt recording
-- [ ] Delete requires confirmation
-- [ ] Auth flows unchanged (register, login, logout, `/` redirect)
-- [ ] `npm test`, `npm run lint`, `npm run build` pass
+- [x] List shows all MCQs with actions menu
+- [x] Create and edit share one form; 2–6 choices; one correct
+- [x] Preview opens in dialog; optional attempt recording
+- [x] Delete requires confirmation
+- [x] Auth flows unchanged (register, login, logout, `/` redirect)
+- [x] `npm test`, `npm run lint`, `npm run build` pass
 
 ---
 
@@ -753,7 +753,7 @@ When working with this PRD:
 ## Current Status
 
 **Last Updated:** September 10, 2026  
-**Current Phase:** Phase 4 — UI (List, Form, Preview, Delete)  
-**Status:** PLANNED  
-**Next Steps:** Write component tests (RED), add shadcn components, build MCQ UI pages  
-**Prerequisite:** Phase 3 complete (all `/api/mcqs` endpoints)
+**Current Phase:** MCQ CRUD feature complete (Phases 1–4)  
+**Status:** COMPLETED  
+**Next Steps:** Manual smoke test on `npm run preview`; apply migration `0002` remotely when ready to deploy  
+**Prerequisite:** All four phases implemented and verified locally
