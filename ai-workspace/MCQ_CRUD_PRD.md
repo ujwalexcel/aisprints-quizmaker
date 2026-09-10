@@ -442,7 +442,7 @@ A phase is **done** only when:
 
 ---
 
-### Phase 2: McqService, Validation, and Session Helper - PLANNED
+### Phase 2: McqService, Validation, and Session Helper - COMPLETED
 
 **Objective**: Server-side MCQ CRUD, attempts, and Zod schemas — unit tested with mocked D1.
 
@@ -470,10 +470,10 @@ A phase is **done** only when:
 
 **Phase 2 acceptance**:
 
-- [ ] `npm test` passes
-- [ ] Service enforces 2–6 choices and one correct answer
-- [ ] `createMcq` persists `created_by_user_id` from authenticated user
-- [ ] Attempts record `user_id` and `is_correct`
+- [x] `npm test` passes (69 tests)
+- [x] Service enforces 2–6 choices and one correct answer (Zod validation)
+- [x] `createMcq` persists `created_by_user_id` from authenticated user
+- [x] Attempts record `user_id` and `is_correct`
 
 ---
 
@@ -753,7 +753,7 @@ When working with this PRD:
 ## Current Status
 
 **Last Updated:** September 10, 2026  
-**Current Phase:** Phase 2 — McqService, Validation, and Session Helper  
+**Current Phase:** Phase 3 — API Route Handlers  
 **Status:** PLANNED  
-**Next Steps:** Write validation, `require-session`, and `mcq-service` tests (RED), then implement  
-**Prerequisite:** Phase 1 complete (schema contract + local migration `0002`)
+**Next Steps:** Write MCQ API route tests (RED), then implement routes under `src/app/api/mcqs/`  
+**Prerequisite:** Phase 2 complete (McqService, validation, require-session)
