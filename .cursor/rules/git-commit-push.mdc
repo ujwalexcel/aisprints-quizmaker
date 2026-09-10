@@ -1,0 +1,31 @@
+---
+description: Require explicit user approval before git commit or push
+alwaysApply: true
+---
+
+# Git Commit and Push Approval
+
+Do **not** run `git commit`, `git push`, or any command that publishes local changes to the remote branch unless the user has **explicitly** asked you to commit and/or push in the current conversation.
+
+## Required behavior
+
+- After completing work, stop and summarize changes. Tell the user the work is ready for review.
+- Do not commit or push proactively, even at the end of a phase or feature, unless the user clearly requests it.
+- Phrases like "looks good", "approved", or "continue" are **not** commit/push approval unless they also mention committing or pushing.
+- If the user asks to commit, stage only files relevant to the requested work. Do not include unrelated local changes unless they ask for them.
+
+## When approval is given
+
+- Follow the repository's commit message style.
+- Run `git status` after the commit to confirm success.
+- Push only when the user explicitly asked to push (or asked to commit and push together).
+
+## Examples
+
+**No approval — do not commit:**
+- "Phase 2 is done, ready for review."
+- "Continue with phase 3."
+
+**Approval — commit/push is allowed:**
+- "Commit and push these changes."
+- "I've reviewed and approved — please commit and push."
