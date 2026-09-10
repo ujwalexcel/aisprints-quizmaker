@@ -477,7 +477,7 @@ A phase is **done** only when:
 
 ---
 
-### Phase 3: API Route Handlers - PLANNED
+### Phase 3: API Route Handlers - COMPLETED
 
 **Objective**: All MCQ HTTP endpoints work; route tests pass with mocked service + session.
 
@@ -504,9 +504,9 @@ A phase is **done** only when:
 
 **Phase 3 acceptance**:
 
-- [ ] All MCQ endpoints return correct status codes
-- [ ] All endpoints require authentication (401 without session)
-- [ ] Auth API tests still pass (no regression)
+- [x] All MCQ endpoints return correct status codes
+- [x] All endpoints require authentication (401 without session)
+- [x] Auth API tests still pass (no regression)
 
 ---
 
@@ -753,7 +753,7 @@ When working with this PRD:
 ## Current Status
 
 **Last Updated:** September 10, 2026  
-**Current Phase:** Phase 3 — API Route Handlers  
+**Current Phase:** Phase 4 — UI (List, Form, Preview, Delete)  
 **Status:** PLANNED  
-**Next Steps:** Write MCQ API route tests (RED), then implement routes under `src/app/api/mcqs/`  
-**Prerequisite:** Phase 2 complete (McqService, validation, require-session)
+**Next Steps:** Write component tests (RED), add shadcn components, build MCQ UI pages  
+**Prerequisite:** Phase 3 complete (all `/api/mcqs` endpoints)
