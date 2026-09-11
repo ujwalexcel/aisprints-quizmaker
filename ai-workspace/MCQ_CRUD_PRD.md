@@ -560,6 +560,117 @@ A phase is **done** only when:
 
 ---
 
+### Phase 5: Feature Completion and Implementation Record - COMPLETED
+
+**Objective**: Close out the MCQ CRUD feature with a complete implementation record, acceptance sign-off, and updated agent docs — no new product code unless fixing gaps found during verification.
+
+**Tasks**:
+
+1. Verify full suite: `npm test`, `npm run lint`, `npm run build`
+2. Check all feature-level acceptance criteria (below)
+3. Add Implementation Record section (commits, routes, test map)
+4. Update `AGENTS.md` project description
+5. Document operator deploy checklist (remote migration `0002`, `SESSION_SECRET`)
+
+**Phase 5 acceptance**:
+
+- [x] All feature acceptance criteria checked
+- [x] Implementation record complete in this PRD
+- [x] `AGENTS.md` reflects auth + MCQ capabilities
+- [x] `npm test` (94 tests), `npm run lint`, `npm run build` pass
+- [x] No remote migration or deploy performed (operator-managed)
+
+---
+
+### Phase 6: Pull Request and Merge Readiness - IN PROGRESS
+
+**Objective**: Open a pull request from `feature/mcq_crud_branch` to `main` with a complete summary and test plan. No production deploy or remote D1 migration in this phase (operator-managed in deploy checklist).
+
+**Tasks**:
+
+1. Commit Phase 5 documentation (`AGENTS.md`, PRD implementation record)
+2. Push branch to `origin`
+3. Open PR to `main` with summary and test plan
+4. Confirm CI-equivalent checks pass locally (`npm test`, `npm run lint`, `npm run build`)
+
+**Phase 6 acceptance**:
+
+- [ ] Phase 5 docs committed and pushed
+- [ ] PR opened against `main`
+- [ ] PR description includes summary, test plan, and deploy prerequisites
+- [ ] Local verification passes (94 tests, lint, build)
+- [ ] No `npm run deploy` or remote migration unless operator requests separately
+
+---
+
+## Implementation Record
+
+Complete map of what was built, how it connects, and where to find it in code.
+
+### Git and branch
+
+| Item | Value |
+|------|-------|
+| Feature branch | `feature/mcq_crud_branch` |
+| Phase 1 commit | `9f6edc6` — MCQ schema contract, migration `0002`, schema tests |
+| Phase 2 commit | `cd861f5` — McqService, validation, `require-session` |
+| Phase 3 commit | `430dd2e` — MCQ API routes + route tests |
+| Phase 4 commit | `7ab7eb9` — MCQ list, form, preview dialog, delete UI |
+| Tooling commit | `65ab4a7` — Cursor rule: explicit approval before commit/push |
+
+Branch also includes auth commits (`c04dba8`–`82d2948`) from `feature/auth-register-login-logout`.
+
+### Route map
+
+| Route | Type | Implementation | Behavior |
+|-------|------|----------------|----------|
+| `/mcqs` | Server (protected) | `src/app/mcqs/page.tsx` | List MCQs via `listMcqs()`; `McqList` client UI |
+| `/mcqs/new` | Server (protected) | `src/app/mcqs/new/page.tsx` | `McqForm` create mode |
+| `/mcqs/[id]/edit` | Server (protected) | `src/app/mcqs/[id]/edit/page.tsx` | `McqForm` edit mode; `notFound()` if missing |
+| `GET/POST /api/mcqs` | API | `src/app/api/mcqs/route.ts` | List / create (session required) |
+| `GET/PUT/DELETE /api/mcqs/[id]` | API | `src/app/api/mcqs/[id]/route.ts` | Read / update / delete |
+| `GET/POST /api/mcqs/[id]/attempts` | API | `src/app/api/mcqs/[id]/attempts/route.ts` | List / record attempts |
+
+### Request flow (create MCQ)
+
+```
+McqForm (client) on /mcqs/new
+  → fetch POST /api/mcqs
+    → requireSession (cookie)
+    → createMcqSchema (Zod)
+    → createMcq(input, session.userId) — sets created_by_user_id
+  → router.push("/mcqs")
+
+/mcqs (server)
+  → session guard → listMcqs() → McqList
+```
+
+### Test suite summary (MCQ additions)
+
+| Phase | Test files | Tests (approx.) |
+|-------|------------|-----------------|
+| 1 | `mcq-schema.test.ts` | 6 |
+| 2 | `mcq.test.ts`, `require-session.test.ts`, `mcq-service.test.ts` | 19 |
+| 3 | `api/mcqs/**/*.test.ts` | 16 |
+| 4 | `components/mcq/*.test.tsx` | 9 |
+| **MCQ subtotal** | 10 files | **50** |
+| **Full suite** | 22 files | **94** (includes 44 auth) |
+
+Run: `npm test`
+
+### Operator deploy checklist
+
+Before production MCQ features work:
+
+1. `npx wrangler d1 migrations apply aisprints-quizmaker-db --remote` (migration `0002`)
+2. `wrangler secret put SESSION_SECRET` (if not already set)
+3. `npm run deploy` (operator runs deploy — not automated by agents)
+4. Smoke test: register/login → create MCQ → edit → preview attempt → delete
+
+Local full-stack test: `npm run preview` (uses Workers runtime + local D1).
+
+---
+
 ## Technical Implementation Details
 
 ### Key Files (planned)
@@ -633,20 +744,20 @@ if (!session) {
 
 Feature ships when **all** items are checked and `npm test` exits 0.
 
-- [ ] MCQ schema migration applied locally
-- [ ] McqService and validation tests pass
-- [ ] All MCQ API route tests pass; endpoints require auth
-- [ ] UI component tests pass
-- [ ] Teacher can list MCQs on `/mcqs`
-- [ ] Teacher can create MCQ with name, question, 2–6 choices, and one correct answer
-- [ ] `created_by_user_id` is set from the logged-in user on create
-- [ ] Teacher can edit an existing MCQ
-- [ ] Teacher can preview an MCQ in a dialog
-- [ ] Teacher can delete an MCQ after confirmation
-- [ ] Attempts can be recorded via API (preview submit)
-- [ ] Register, login, logout, and `/` redirect still work (no regression)
-- [ ] `npm run lint` passes
-- [ ] `npm run build` passes
+- [x] MCQ schema migration applied locally
+- [x] McqService and validation tests pass
+- [x] All MCQ API route tests pass; endpoints require auth
+- [x] UI component tests pass
+- [x] Teacher can list MCQs on `/mcqs`
+- [x] Teacher can create MCQ with name, question, 2–6 choices, and one correct answer
+- [x] `created_by_user_id` is set from the logged-in user on create
+- [x] Teacher can edit an existing MCQ
+- [x] Teacher can preview an MCQ in a dialog
+- [x] Teacher can delete an MCQ after confirmation
+- [x] Attempts can be recorded via API (preview submit)
+- [x] Register, login, logout, and `/` redirect still work (no regression)
+- [x] `npm run lint` passes
+- [x] `npm run build` passes
 
 ---
 
@@ -752,8 +863,8 @@ When working with this PRD:
 
 ## Current Status
 
-**Last Updated:** September 10, 2026  
-**Current Phase:** MCQ CRUD feature complete (Phases 1–4)  
-**Status:** COMPLETED  
-**Next Steps:** Manual smoke test on `npm run preview`; apply migration `0002` remotely when ready to deploy  
-**Prerequisite:** All four phases implemented and verified locally
+**Last Updated:** September 11, 2026  
+**Current Phase:** Phase 6 — Pull request and merge readiness  
+**Status:** IN PROGRESS  
+**Next Steps:** Merge PR to `main`; then operator deploy (remote migration `0002`, `SESSION_SECRET`)  
+**Prerequisite:** Phases 1–5 complete; Phase 6 PR opened

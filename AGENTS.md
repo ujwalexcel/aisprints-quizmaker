@@ -11,9 +11,10 @@ the problem, the primary user, and the current state. Two or three sentences.
 Keep it current. An out-of-date description here misleads every future conversation.
 -->
 
-This is an unmodified AISprints starter. No application features have been built yet.
-The technical PRD in `ai-workspace/` is the source of truth for what is being built and
-for the current phase of work.
+Quiz maker for teachers: register/login/logout with session cookies, a protected MCQ test
+bank at `/mcqs`, and full MCQ CRUD (create, list, edit, delete, preview with attempts).
+Auth and MCQ features are implemented per `ai-workspace/Register_login_and_logout_prd.md`
+and `ai-workspace/MCQ_CRUD_PRD.md`. D1 bindings, Vitest, bcrypt, and Zod are in use.
 
 ## Stack
 
@@ -24,8 +25,9 @@ for the current phase of work.
 - **TypeScript** in strict mode
 - **Wrangler** for Cloudflare configuration, secrets, and deployment
 
-No database, authentication, testing framework, or AI SDK is installed yet. Do not
-write code that imports one without adding it first and telling the user.
+D1 (`DB` binding), Vitest, bcryptjs, and Zod are installed. No AI SDK yet. Ask before
+adding new dependencies. Apply D1 migrations locally by default; remote migrate/deploy
+only when the operator explicitly requests it.
 
 ## Layout
 
